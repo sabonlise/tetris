@@ -3,18 +3,18 @@ import random
 
 pygame.font.init()
 
-# GLOBALS VARS
+# Глобальные переменные
 s_width = 800
 s_height = 700
-play_width = 300  # meaning 300 // 10 = 30 width per block
-play_height = 600  # meaning 600 // 20 = 30 height per block
+play_width = 300
+play_height = 600
 block_size = 30
 
-top_left_x = (s_width - play_width) // 2
-top_left_y = s_height - play_height
+top_left_x = (s_width - play_width) // 2  # верхняя левая координата X
+top_left_y = s_height - play_height       # верхняя левая координата Y
 
 
-# SHAPE FORMATS
+# Формы фигур
 
 S = [['.....',
       '.....',
@@ -120,34 +120,35 @@ T = [['.....',
 
 shapes = [S, Z, I, O, J, L, T]
 shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 165, 0), (0, 0, 255), (128, 0, 128)]
-# index 0 - 6 represent shape
 
 
-class Piece(object):  # *
+class Piece(object):
     def __init__(self, x, y, shape):
         self.x = x
         self.y = y
         self.shape = shape
-        self.color = shape_colors[shapes.index(shape)]
+        # self.color = shape_colors[shapes.index(shape)]
+        self.color = random.choice(shape_colors)
         self.rotation = 0
 
 
-def create_grid(locked_pos={}):  # *
-    grid = [[(0,0,0) for _ in range(10)] for _ in range(20)]
+def create_grid(locked_pos={}):
 
+    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
     for i in range(len(grid)):
         for j in range(len(grid[i])):
             if (j, i) in locked_pos:
-                c = locked_pos[(j,i)]
+                c = locked_pos[(j, i)]
                 grid[i][j] = c
     return grid
 
 
 def convert_shape_format(shape):
     positions = []
-    format = shape.shape[shape.rotation % len(shape.shape)]
 
-    for i, line in enumerate(format):
+    formatted = shape.shape[shape.rotation % len(shape.shape)]
+
+    for i, line in enumerate(formatted):
         row = list(line)
         for j, column in enumerate(row):
             if column == '0':
@@ -160,7 +161,7 @@ def convert_shape_format(shape):
 
 
 def valid_space(shape, grid):
-    accepted_pos = [[(j, i) for j in range(10) if grid[i][j] == (0,0,0)] for i in range(20)]
+    accepted_pos = [[(j, i) for j in range(10) if grid[i][j] == (0, 0, 0)] for i in range(20)]
     accepted_pos = [j for sub in accepted_pos for j in sub]
 
     formatted = convert_shape_format(shape)
@@ -189,7 +190,8 @@ def draw_text_middle(surface, text, size, color):
     font = pygame.font.SysFont("comicsans", size, bold=True)
     label = font.render(text, 1, color)
 
-    surface.blit(label, (top_left_x + play_width /2 - (label.get_width()/2), top_left_y + play_height/2 - label.get_height()/2))
+    surface.blit(label, (top_left_x + play_width // 2 - (label.get_width() // 2),
+                         top_left_y + play_height // 2 - label.get_height() // 2))
 
 
 def draw_grid(surface, grid):
@@ -197,9 +199,9 @@ def draw_grid(surface, grid):
     sy = top_left_y
 
     for i in range(len(grid)):
-        pygame.draw.line(surface, (128,128,128), (sx, sy + i*block_size), (sx+play_width, sy+ i*block_size))
+        pygame.draw.line(surface, (128, 128, 128), (sx, sy + i * block_size), (sx+play_width, sy + i * block_size))
         for j in range(len(grid[i])):
-            pygame.draw.line(surface, (128, 128, 128), (sx + j*block_size, sy),(sx + j*block_size, sy + play_height))
+            pygame.draw.line(surface, (128, 128, 128), (sx + j * block_size, sy), (sx + j*block_size, sy + play_height))
 
 
 def clear_rows(grid, locked):
@@ -212,8 +214,8 @@ def clear_rows(grid, locked):
             ind = i
             for j in range(len(row)):
                 try:
-                    del locked[(j,i)]
-                except:
+                    del locked[(j, i)]
+                except Exception:
                     continue
 
     if inc > 0:
@@ -228,17 +230,20 @@ def clear_rows(grid, locked):
 
 def draw_next_shape(shape, surface):
     font = pygame.font.SysFont('comicsans', 30)
-    label = font.render('Next Shape', 1, (255,255,255))
+    label = font.render('Следующая фигура', 1, (255, 255, 255))
 
     sx = top_left_x + play_width + 50
-    sy = top_left_y + play_height/2 - 100
-    format = shape.shape[shape.rotation % len(shape.shape)]
+    sy = top_left_y + play_height // 2 - 100
+    formatted = shape.shape[shape.rotation % len(shape.shape)]
 
-    for i, line in enumerate(format):
+    for i, line in enumerate(formatted):
         row = list(line)
         for j, column in enumerate(row):
             if column == '0':
-                pygame.draw.rect(surface, shape.color, (sx + j*block_size, sy + i*block_size, block_size, block_size), 0)
+                pygame.draw.rect(surface, shape.color,
+                                 (sx + j * block_size,
+                                  sy + i * block_size,
+                                  block_size, block_size), 0)
 
     surface.blit(label, (sx + 10, sy - 30))
 
@@ -261,25 +266,28 @@ def max_score():
     return score
 
 
-def draw_window(surface, grid, score=0, last_score = 0):
-    surface.fill((0, 0, 0))
+def draw_window(surface, grid, score=0, last_score=0):
 
-    pygame.font.init()
-    font = pygame.font.SysFont('comicsans', 60)
-    label = font.render('Tetris', 1, (255, 255, 255))
+    try:
+        surface.fill((0, 0, 0))
 
-    surface.blit(label, (top_left_x + play_width / 2 - (label.get_width() / 2), 30))
+        pygame.font.init()
+        font = pygame.font.SysFont('comicsans', 60)
+        label = font.render('Тетрис', 1, (255, 255, 255))
 
-    # current score
-    font = pygame.font.SysFont('comicsans', 30)
-    label = font.render('Score: ' + str(score), 1, (255,255,255))
+        surface.blit(label, (top_left_x + play_width // 2 - (label.get_width() // 2), 30))
+        # текущий счёт
+        font = pygame.font.SysFont('comicsans', 30)
+        label = font.render('Счёт: ' + str(score), 1, (255, 255, 255))
 
-    sx = top_left_x + play_width + 50
-    sy = top_left_y + play_height/2 - 100
+        sx = top_left_x + play_width + 50
+        sy = top_left_y + play_height/2 - 100
 
-    surface.blit(label, (sx + 20, sy + 160))
-    # last score
-    label = font.render('High Score: ' + last_score, 1, (255,255,255))
+        surface.blit(label, (sx + 20, sy + 160))
+        # последний наивысший счёт
+        label = font.render('Рекорд: ' + last_score, 1, (255,255,255))
+    except pygame.error:
+        pass
 
     sx = top_left_x - 200
     sy = top_left_y + 200
@@ -288,15 +296,17 @@ def draw_window(surface, grid, score=0, last_score = 0):
 
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            pygame.draw.rect(surface, grid[i][j], (top_left_x + j*block_size, top_left_y + i*block_size, block_size, block_size), 0)
+            pygame.draw.rect(surface, grid[i][j], (top_left_x + j*block_size,
+                                                   top_left_y + i*block_size,
+                                                   block_size, block_size), 0)
 
     pygame.draw.rect(surface, (255, 0, 0), (top_left_x, top_left_y, play_width, play_height), 5)
 
     draw_grid(surface, grid)
-    #pygame.display.update()
+    #  pygame.display.update()
 
 
-def main(win):  # *
+def main(window):
     last_score = max_score()
     locked_positions = {}
     grid = create_grid(locked_positions)
@@ -317,12 +327,12 @@ def main(win):  # *
         level_time += clock.get_rawtime()
         clock.tick()
 
-        if level_time/1000 > 5:
+        if level_time // 1000 > 5:
             level_time = 0
             if level_time > 0.12:
                 level_time -= 0.005
 
-        if fall_time/1000 > fall_speed:
+        if fall_time // 1000 > fall_speed:
             fall_time = 0
             current_piece.y += 1
             if not(valid_space(current_piece, grid)) and current_piece.y > 0:
@@ -368,33 +378,34 @@ def main(win):  # *
             change_piece = False
             score += clear_rows(grid, locked_positions) * 10
 
-        draw_window(win, grid, score, last_score)
-        draw_next_shape(next_piece, win)
+        draw_window(window, grid, score, last_score)
+        draw_next_shape(next_piece, window)
         pygame.display.update()
 
         if check_lost(locked_positions):
-            draw_text_middle(win, "YOU LOST!", 80, (255,255,255))
+            draw_text_middle(window, "Вы проиграли!", 80, (255, 255, 255))
             pygame.display.update()
             pygame.time.delay(1500)
             run = False
             update_score(score)
 
 
-def main_menu(win):  # *
+def main_menu(window):
     run = True
     while run:
-        win.fill((0,0,0))
-        draw_text_middle(win, 'Press Any Key To Play', 60, (255,255,255))
+        window.fill((0, 0, 0))
+        draw_text_middle(window, 'Нажмите любую кнопку', 60, (255, 255, 255))
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+                pygame.quit()
             if event.type == pygame.KEYDOWN:
-                main(win)
+                main(window)
 
     pygame.display.quit()
 
 
-win = pygame.display.set_mode((s_width, s_height))
-pygame.display.set_caption('Tetris')
-main_menu(win)
+window = pygame.display.set_mode((s_width, s_height))
+pygame.display.set_caption('Тетрис')
+main_menu(window)
