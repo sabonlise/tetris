@@ -283,6 +283,8 @@ def draw_window(surface, grid, grid2, score, score2):
 
 
 def main(window):
+    first_lost = False
+    second_lost = False
     locked_positions = {}
     locked_positions2 = {}
     grid = create_grid(locked_positions)
@@ -386,7 +388,7 @@ def main(window):
             if y > -1:
                 grid[y][x] = current_piece.color
 
-        if change_piece:
+        if change_piece and not first_lost:
             for pos in shape_pos:
                 p = (pos[0], pos[1])
                 locked_positions[p] = current_piece.color
@@ -401,7 +403,7 @@ def main(window):
             if y > -1:
                 grid2[y][x] = current_piece2.color
 
-        if change_piece2:
+        if change_piece2 and not second_lost:
             for pos in shape_pos2:
                 p2 = (pos[0], pos[1])
                 locked_positions2[p2] = current_piece2.color
@@ -415,16 +417,34 @@ def main(window):
         pygame.display.update()
         # проверка поражения
         if check_lost(locked_positions):
-            draw_text_middle(window, "1 проиграл!", 80, (255, 255, 255))
-            pygame.display.update()
-            pygame.time.delay(1500)
-            run = False
+            if second_lost:
+                if score > score2:
+                    draw_text_middle(window, "2 проиграл!", 80, (255, 255, 255))
+                elif score2 > score:
+                    draw_text_middle(window, "1 проиграл!", 80, (255, 255, 255))
+                else:
+                    draw_text_middle(window, "ничья!", 80, (255, 255, 255))
+                pygame.display.update()
+                pygame.time.delay(1500)
+                run = False
+            else:
+                first_lost = True
+
 
         if check_lost(locked_positions2):
-            draw_text_middle(window, "2 проиграл!", 80, (255, 255, 255))
-            pygame.display.update()
-            pygame.time.delay(1500)
-            run = False
+            if first_lost:
+                if score > score2:
+                    draw_text_middle(window, "2 проиграл!", 80, (255, 255, 255))
+                elif score2 > score:
+                    draw_text_middle(window, "1 проиграл!", 80, (255, 255, 255))
+                else:
+                    draw_text_middle(window, "ничья!", 80, (255, 255, 255))
+                pygame.display.update()
+                pygame.time.delay(1500)
+                run = False
+            else:
+                second_lost = True
+
 
 
 
