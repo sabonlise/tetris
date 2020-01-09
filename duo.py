@@ -1,11 +1,25 @@
 import pygame
 import random
+import os
+import main_menu as mm
+
 
 pygame.font.init()
+pygame.init()
+
+# инициализация звука
+
+line_sound = pygame.mixer.Sound('data/line.wav')
+game_over = pygame.mixer.Sound('data/gameover.wav')
+draw = pygame.mixer.Sound('data/success.wav')
+
+game_over.set_volume(0.1)
+line_sound.set_volume(0.1)
+draw.set_volume(0.1)
 
 # Глобальные переменные
 s_width = 800
-s_height = 650
+s_height = 700
 play_width = 300
 play_height = 600
 block_size = 30
@@ -131,6 +145,12 @@ class Piece(object):
         self.rotation = 0
 
 
+def load_image(name):
+    fullname = os.path.join('data', name)
+    image = pygame.image.load(fullname).convert()
+    return image
+
+
 def create_grid(locked_pos={}):
     grid = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
     for i in range(len(grid)):
@@ -138,6 +158,7 @@ def create_grid(locked_pos={}):
             if (j, i) in locked_pos:
                 c = locked_pos[(j, i)]
                 grid[i][j] = c
+
     return grid
 
 
@@ -168,6 +189,7 @@ def valid_space(shape, grid):
         if pos not in accepted_pos:
             if pos[1] > -1:
                 return False
+
     return True
 
 
@@ -185,10 +207,10 @@ def get_shape():
 
 
 def draw_text_middle(surface, text, size, color):
-    font = pygame.font.SysFont("comicsans", size, bold=True)
+    font = pygame.font.SysFont("comicsans", size)
     label = font.render(text, 1, color)
 
-    surface.blit(label, (100, 250))
+    surface.blit(label, (160, 325))
 
 
 def draw_grid(surface, grid, num, score):
@@ -199,7 +221,7 @@ def draw_grid(surface, grid, num, score):
     dy = play_height
     pygame.draw.rect(surface, (255, 0, 0), (sx, top_left_y, play_width, play_height), 5)
     label = font.render('Счёт: ' + str(score), 1, (255, 255, 255))
-    surface.blit(label, (sx, 0))
+    surface.blit(label, (sx + 70, 30))
     for i in range(len(grid)):
         pygame.draw.line(surface, (128, 128, 128), (sx, sy + i * block_size), (sx + play_width, sy + i * block_size))
         for j in range(len(grid[i])):
@@ -211,12 +233,13 @@ def clear_rows(grid, locked):
     inc = 0
     for i in range(len(grid)-1, -1, -1):
         row = grid[i]
-        if (0,0,0) not in row:
+        if (0, 0, 0) not in row:
             inc += 1
             ind = i
             for j in range(len(row)):
                 try:
                     del locked[(j, i)]
+                    pygame.mixer.Sound.play(line_sound)
                 except Exception:
                     continue
 
@@ -232,7 +255,7 @@ def clear_rows(grid, locked):
 
 def draw_next_shape(shape, shape2, surface):
     font = pygame.font.SysFont('comicsans', 30)
-    # drawing next shape for 1 player
+    # отрисовка следующей фигуры для первого игрока
     label = font.render('Next 1:', 1, (255, 255, 255))
     sx = top_left_x + play_width - 23
     sy = top_left_y
@@ -243,10 +266,10 @@ def draw_next_shape(shape, shape2, surface):
             if column == '0':
                 pygame.draw.rect(surface, shape.color,
                                  (sx + j * block_size,
-                                  sy + i * block_size,
+                                  sy + 75 + i * block_size,
                                   block_size, block_size), 0)
-    surface.blit(label, (sx + 35, sy - 20))
-    # drawing next for 2 player
+    surface.blit(label, (sx + 40, sy + 50))
+    # отрисовка следующей фигуры для второго игрока
     label = font.render('Next 2:', 1, (255, 255, 255))
     sx = top_left_x + play_width - 23
     sy = top_left_y + play_height // 2 - 100
@@ -257,24 +280,25 @@ def draw_next_shape(shape, shape2, surface):
             if column == '0':
                 pygame.draw.rect(surface, shape2.color,
                                  (sx + j * block_size,
-                                  sy + i * block_size,
+                                  sy + 75 + i * block_size,
                                   block_size, block_size), 0)
-    surface.blit(label, (sx + 35, sy - 20))
+    surface.blit(label, (sx + 40, sy + 50))
 
 
 def draw_window(surface, grid, grid2, score, score2):
-    surface.fill((0, 0, 0))
-    # 2 shape
+    fon = pygame.transform.scale(load_image('back.jpg'), (s_width, s_height))
+    surface.blit(fon, (0, 0))
+    # фигура второго игрока
     for i in range(len(grid2)):
         for j in range(len(grid2[i])):
-            pygame.draw.rect(surface, grid2[i][j], (top_left_x + play_width + 100 + j*block_size,
-                                                   top_left_y + i*block_size,
+            pygame.draw.rect(surface, grid2[i][j], (top_left_x + play_width + 100 + j * block_size,
+                                                   top_left_y + i * block_size,
                                                    block_size, block_size), 0)
-    # 1 shape
+    # фигура первого игрока
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            pygame.draw.rect(surface, grid[i][j], (top_left_x + j*block_size,
-                                                   top_left_y + i*block_size,
+            pygame.draw.rect(surface, grid[i][j], (top_left_x + j * block_size,
+                                                   top_left_y + i * block_size,
                                                    block_size, block_size), 0)
 
     draw_grid(surface, grid, 0, score)
@@ -285,19 +309,22 @@ def draw_window(surface, grid, grid2, score, score2):
 def main(window):
     first_lost = False
     second_lost = False
-    locked_positions = {}
-    locked_positions2 = {}
-    grid = create_grid(locked_positions)
-    grid2 = create_grid(locked_positions2)
-
     change_piece = False
     change_piece2 = False
     run = True
+
+    locked_positions = {}
+    locked_positions2 = {}
+
+    grid = create_grid(locked_positions)
+    grid2 = create_grid(locked_positions2)
+
     current_piece = get_shape()
     current_piece2 = get_shape()
     next_piece = get_shape()
     next_piece2 = get_shape()
     clock = pygame.time.Clock()
+
     fall_time = 0
     fall_speed = 0.27
     level_time = 0
@@ -332,6 +359,7 @@ def main(window):
             fall_time2 = 0
             current_piece2.y += 1
             if not(valid_space(current_piece2, grid2)) and current_piece2.y > 0:
+                print('qq')
                 current_piece2.y -= 1
                 change_piece2 = True
 
@@ -345,41 +373,43 @@ def main(window):
                 run = False
                 pygame.display.quit()
 
-            if event.type == pygame.KEYDOWN and current_piece.y > 1 and current_piece2.y > 1:
-                # control 1 player
-                if event.key == pygame.K_a:
-                    current_piece.x -= 1
-                    if not(valid_space(current_piece, grid)):
-                        current_piece.x += 1
-                if event.key == pygame.K_d:
-                    current_piece.x += 1
-                    if not(valid_space(current_piece, grid)):
+            else:
+                keys = pygame.key.get_pressed()
+                if current_piece.y > 1 and current_piece2.y > 1:
+                    # управление первого игрока
+                    if keys[pygame.K_a]:
                         current_piece.x -= 1
-                if event.key == pygame.K_s:
-                    current_piece.y += 1
-                    if not(valid_space(current_piece, grid)):
-                        current_piece.y -= 1
-                if event.key == pygame.K_w:
-                    current_piece.rotation += 1
-                    if not(valid_space(current_piece, grid)):
-                        current_piece.rotation -= 1
-                # control 2 player
-                if event.key == pygame.K_UP:
-                    current_piece2.rotation += 1
-                    if not (valid_space(current_piece2, grid2)):
-                        current_piece2.rotation -= 1
-                if event.key == pygame.K_LEFT:
-                    current_piece2.x -= 1
-                    if not(valid_space(current_piece2, grid2)):
-                        current_piece2.x += 1
-                if event.key == pygame.K_DOWN:
-                    current_piece2.y += 1
-                    if not(valid_space(current_piece2, grid2)):
-                        current_piece2.y -= 1
-                if event.key == pygame.K_RIGHT:
-                    current_piece2.x += 1
-                    if not(valid_space(current_piece2, grid2)):
+                        if not(valid_space(current_piece, grid)):
+                            current_piece.x += 1
+                    elif keys[pygame.K_d]:
+                        current_piece.x += 1
+                        if not(valid_space(current_piece, grid)):
+                            current_piece.x -= 1
+                    elif keys[pygame.K_s]:
+                        current_piece.y += 1
+                        if not(valid_space(current_piece, grid)):
+                            current_piece.y -= 1
+                    elif keys[pygame.K_w]:
+                        current_piece.rotation += 1
+                        if not(valid_space(current_piece, grid)):
+                            current_piece.rotation -= 1
+                    # управление второго игрока
+                    elif keys[pygame.K_UP]:
+                        current_piece2.rotation += 1
+                        if not (valid_space(current_piece2, grid2)):
+                            current_piece2.rotation -= 1
+                    elif keys[pygame.K_LEFT]:
                         current_piece2.x -= 1
+                        if not(valid_space(current_piece2, grid2)):
+                            current_piece2.x += 1
+                    elif keys[pygame.K_DOWN]:
+                        current_piece2.y += 1
+                        if not(valid_space(current_piece2, grid2)):
+                            current_piece2.y -= 1
+                    elif keys[pygame.K_RIGHT]:
+                        current_piece2.x += 1
+                        if not(valid_space(current_piece2, grid2)):
+                            current_piece2.x -= 1
         # 1 shape
         shape_pos = convert_shape_format(current_piece)
         for i in range(len(shape_pos)):
@@ -418,39 +448,49 @@ def main(window):
         if check_lost(locked_positions):
             if second_lost:
                 if score > score2:
-                    draw_text_middle(window, "2 проиграл!", 80, (255, 255, 255))
+                    window.fill((0, 0, 0))
+                    draw_text_middle(window, "Первый игрок выиграл!", 80, (255, 255, 255))
+                    pygame.mixer.Sound.play(game_over)
+                    pygame.mixer.music.stop()
                 elif score2 > score:
-                    draw_text_middle(window, "1 проиграл!", 80, (255, 255, 255))
+                    window.fill((0, 0, 0))
+                    draw_text_middle(window, "Второй игрок выиграл!", 80, (255, 255, 255))
+                    pygame.mixer.Sound.play(game_over)
+                    pygame.mixer.music.stop()
                 else:
-                    draw_text_middle(window, "ничья!", 80, (255, 255, 255))
+                    window.fill((0, 0, 0))
+                    draw_text_middle(window, "Ничья!", 80, (255, 255, 255))
+                    pygame.mixer.Sound.play(draw)
+                    pygame.mixer.music.stop()
                 pygame.display.update()
                 pygame.time.delay(1500)
                 run = False
             else:
                 first_lost = True
 
-
-        if check_lost(locked_positions2):
+        '''if check_lost(locked_positions2):
             if first_lost:
                 if score > score2:
                     draw_text_middle(window, "2 проиграл!", 80, (255, 255, 255))
                 elif score2 > score:
                     draw_text_middle(window, "1 проиграл!", 80, (255, 255, 255))
                 else:
-                    draw_text_middle(window, "ничья!", 80, (255, 255, 255))
+                    draw_text_middle(window, "Ничья!", 80, (255, 255, 255))
                 pygame.display.update()
                 pygame.time.delay(1500)
                 run = False
             else:
-                second_lost = True
-
-
+                second_lost = True'''
 
 
 def main_menu(window):
     run = True
+    fon = pygame.transform.scale(load_image('fon.jpg'), (s_width, s_height))
+    pygame.mixer.music.load('data/tetris_theme.mp3')
+    pygame.mixer.music.play(-1)
+    pygame.mixer.music.set_volume(0.5)
     while run:
-        window.fill((0, 0, 0))
+        window.blit(fon, (0, 0))
         draw_text_middle(window, 'Нажмите любую кнопку', 60, (255, 255, 255))
         pygame.display.update()
         for event in pygame.event.get():
@@ -459,9 +499,9 @@ def main_menu(window):
                 pygame.quit()
             if event.type == pygame.KEYDOWN:
                 main(window)
+
     pygame.display.quit()
 
 
 window = pygame.display.set_mode((s_width, s_height))
 pygame.display.set_caption('Тетрис')
-main_menu(window)
