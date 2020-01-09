@@ -28,6 +28,12 @@ class Button:
         return False
 
 
+def load_image(name):
+    fullname = os.path.join('data', name)
+    image = pygame.image.load(fullname).convert()
+    return image
+
+
 def draw_text_middle(surface, text, size, color):
     font = pygame.font.SysFont("comicsans", size, bold=True)
     label = font.render(text, 1, color)
@@ -38,8 +44,10 @@ def draw_text_middle(surface, text, size, color):
 
 def main_menu(window):
     run = True
+    fon = pygame.transform.scale(load_image('fon.jpg'), (s_width, s_height))
+    window.blit(fon, (0, 0))
     while run:
-        window.fill((0, 0, 0))
+       # window.fill((0, 0, 0))
         button_solo.draw(window)
         button_duo.draw(window)
         draw_text_middle(window, 'Выберите режим игры',
