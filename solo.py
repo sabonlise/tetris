@@ -1,11 +1,21 @@
 import pygame
 import random
+import os
+import main_menu as mm
 
 pygame.font.init()
 
+pygame.init()
+
+line_sound = pygame.mixer.Sound('data/line.wav')
+game_over = pygame.mixer.Sound('data/gameover.wav')
+
+game_over.set_volume(0.1)
+line_sound.set_volume(0.1)
+
 # Глобальные переменные
 s_width = 800
-s_height = 600
+s_height = 700
 play_width = 300
 play_height = 600
 block_size = 30
@@ -128,17 +138,24 @@ class Piece(object):
         self.y = y
         self.shape = shape
         self.color = shape_colors[shapes.index(shape)]
+        #  self.color = random.choice(shape_colors)
         self.rotation = 0
 
 
-def create_grid(locked_pos={}):
+def load_image(name):
+    fullname = os.path.join('data', name)
+    image = pygame.image.load(fullname).convert()
+    return image
 
+
+def create_grid(locked_pos={}):
     grid = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
     for i in range(len(grid)):
         for j in range(len(grid[i])):
             if (j, i) in locked_pos:
                 c = locked_pos[(j, i)]
                 grid[i][j] = c
+
     return grid
 
 
@@ -169,6 +186,7 @@ def valid_space(shape, grid):
         if pos not in accepted_pos:
             if pos[1] > -1:
                 return False
+
     return True
 
 
@@ -186,11 +204,10 @@ def get_shape():
 
 
 def draw_text_middle(surface, text, size, color):
-    font = pygame.font.SysFont("comicsans", size, bold=True)
+    font = pygame.font.SysFont("comicsans", size)
     label = font.render(text, 1, color)
 
-    surface.blit(label, (top_left_x + play_width // 2 - (label.get_width() // 2),
-                         top_left_y + play_height // 2 - label.get_height() // 2))
+    surface.blit(label, (160, 325))
 
 
 def draw_grid(surface, grid):
@@ -206,14 +223,15 @@ def draw_grid(surface, grid):
 def clear_rows(grid, locked):
 
     inc = 0
-    for i in range(len(grid)-1, -1, -1):
+    for i in range(len(grid) - 1, -1, -1):
         row = grid[i]
-        if (0,0,0) not in row:
+        if (0, 0, 0) not in row:
             inc += 1
             ind = i
             for j in range(len(row)):
                 try:
                     del locked[(j, i)]
+                    pygame.mixer.Sound.play(line_sound)
                 except Exception:
                     continue
 
@@ -244,17 +262,17 @@ def draw_next_shape(shape, surface):
                                   sy + i * block_size,
                                   block_size, block_size), 0)
 
-    surface.blit(label, (sx + 10, sy - 30))
+    surface.blit(label, (sx - 20, sy - 30))
 
 
-def update_score(nscore):
+def update_score(new_score):
     score = max_score()
 
     with open('scores.txt', 'w') as f:
-        if int(score) > nscore:
+        if int(score) > new_score:
             f.write(str(score))
         else:
-            f.write(str(nscore))
+            f.write(str(new_score))
 
 
 def max_score():
@@ -268,7 +286,8 @@ def max_score():
 def draw_window(surface, grid, score=0, last_score=0):
 
     try:
-        surface.fill((0, 0, 0))
+        fon = pygame.transform.scale(load_image('back.jpg'), (s_width, s_height))
+        surface.blit(fon, (0, 0))
 
         pygame.font.init()
         font = pygame.font.SysFont('comicsans', 60)
@@ -277,22 +296,15 @@ def draw_window(surface, grid, score=0, last_score=0):
         surface.blit(label, (top_left_x + play_width // 2 - (label.get_width() // 2), 30))
         # текущий счёт
         font = pygame.font.SysFont('comicsans', 30)
-        label = font.render('Счёт: ' + str(score), 1, (255, 255, 255))
+        label = font.render('Текущий счёт: ' + str(score), 1, (255, 255, 255))
 
-        sx = top_left_x + play_width + 50
-        sy = top_left_y + play_height/2 - 100
-
-        surface.blit(label, (sx + 20, sy + 160))
+        surface.blit(label, (20, 100))
         # последний наивысший счёт
-        label = font.render('Рекорд: ' + last_score, 1, (255,255,255))
+        label = font.render('Рекорд: ' + str(last_score), 1, (255, 255, 255))
     except pygame.error:
         pass
 
-    sx = top_left_x - 200
-    sy = top_left_y + 200
-
-    surface.blit(label, (sx + 20, sy + 160))
-
+    surface.blit(label, (20, 150))
     for i in range(len(grid)):
         for j in range(len(grid[i])):
             pygame.draw.rect(surface, grid[i][j], (top_left_x + j*block_size,
@@ -312,13 +324,13 @@ def main(window):
 
     change_piece = False
     run = True
+    fall_time = 0
+    level_time = 0
+    score = 0
+    fall_speed = 0.27
     current_piece = get_shape()
     next_piece = get_shape()
     clock = pygame.time.Clock()
-    fall_time = 0
-    fall_speed = 0.27
-    level_time = 0
-    score = 0
 
     while run:
         grid = create_grid(locked_positions)
@@ -342,24 +354,25 @@ def main(window):
             if event.type == pygame.QUIT:
                 run = False
                 pygame.display.quit()
-
-            if event.type == pygame.KEYDOWN  and current_piece.y > 1:
-                if event.key == pygame.K_LEFT:
-                    current_piece.x -= 1
-                    if not(valid_space(current_piece, grid)):
-                        current_piece.x += 1
-                if event.key == pygame.K_RIGHT:
-                    current_piece.x += 1
-                    if not(valid_space(current_piece, grid)):
+            else:
+                keys = pygame.key.get_pressed()
+                if current_piece.y > 1:
+                    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
                         current_piece.x -= 1
-                if event.key == pygame.K_DOWN:
-                    current_piece.y += 1
-                    if not(valid_space(current_piece, grid)):
-                        current_piece.y -= 1
-                if event.key == pygame.K_UP:
-                    current_piece.rotation += 1
-                    if not(valid_space(current_piece, grid)):
-                        current_piece.rotation -= 1
+                        if not (valid_space(current_piece, grid)):
+                            current_piece.x += 1
+                    elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                        current_piece.x += 1
+                        if not (valid_space(current_piece, grid)):
+                            current_piece.x -= 1
+                    elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                        current_piece.y += 1
+                        if not (valid_space(current_piece, grid)):
+                            current_piece.y -= 1
+                    elif keys[pygame.K_UP] or keys[pygame.K_w]:
+                        current_piece.rotation += 1
+                        if not (valid_space(current_piece, grid)):
+                            current_piece.rotation -= 1
 
         shape_pos = convert_shape_format(current_piece)
 
@@ -377,12 +390,16 @@ def main(window):
             change_piece = False
             score += clear_rows(grid, locked_positions) * 10
 
-        draw_window(window, grid, score, last_score)
+        draw_window(window, grid, score, int(last_score))
         draw_next_shape(next_piece, window)
         pygame.display.update()
 
         if check_lost(locked_positions):
-            draw_text_middle(window, "Вы проиграли!", 80, (255, 255, 255))
+            gameover = pygame.transform.scale(load_image('game_over.jpg'), (s_width, s_height))
+            window.blit(gameover, (0, 0))
+            # draw_text_middle(window, "Вы проиграли!", 80, (255, 255, 255))
+            pygame.mixer.Sound.play(game_over)
+            pygame.mixer.music.stop()
             pygame.display.update()
             pygame.time.delay(1500)
             run = False
@@ -391,8 +408,14 @@ def main(window):
 
 def main_menu(window):
     run = True
+    pygame.mixer.music.load('data/tetris_theme.mp3')
+    pygame.mixer.music.play(-1)
+    pygame.mixer.music.set_volume(0.5)
+    fon = pygame.transform.scale(load_image('fon.jpg'), (s_width, s_height))
+    # window.blit(fon, (0, 0))
     while run:
-        window.fill((0, 0, 0))
+        window.blit(fon, (0, 0))
+       # window.fill((0, 0, 0))
         draw_text_middle(window, 'Нажмите любую кнопку', 60, (255, 255, 255))
         pygame.display.update()
         for event in pygame.event.get():
@@ -407,4 +430,3 @@ def main_menu(window):
 
 window = pygame.display.set_mode((s_width, s_height))
 pygame.display.set_caption('Тетрис')
-main_menu(window)
