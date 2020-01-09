@@ -5,7 +5,7 @@ pygame.font.init()
 
 # Глобальные переменные
 s_width = 800
-s_height = 700
+s_height = 600
 play_width = 300
 play_height = 600
 block_size = 30
@@ -127,8 +127,7 @@ class Piece(object):
         self.x = x
         self.y = y
         self.shape = shape
-        # self.color = shape_colors[shapes.index(shape)]
-        self.color = random.choice(shape_colors)
+        self.color = shape_colors[shapes.index(shape)]
         self.rotation = 0
 
 
@@ -344,7 +343,7 @@ def main(window):
                 run = False
                 pygame.display.quit()
 
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN  and current_piece.y > 1:
                 if event.key == pygame.K_LEFT:
                     current_piece.x -= 1
                     if not(valid_space(current_piece, grid)):

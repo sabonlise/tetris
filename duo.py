@@ -332,7 +332,6 @@ def main(window):
             fall_time2 = 0
             current_piece2.y += 1
             if not(valid_space(current_piece2, grid2)) and current_piece2.y > 0:
-                print('qq')
                 current_piece2.y -= 1
                 change_piece2 = True
 
@@ -346,7 +345,7 @@ def main(window):
                 run = False
                 pygame.display.quit()
 
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN and current_piece.y > 1 and current_piece2.y > 1:
                 # control 1 player
                 if event.key == pygame.K_a:
                     current_piece.x -= 1
