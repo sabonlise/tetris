@@ -1,8 +1,13 @@
-# tetris
-Project was done by sabolise and faker01. 
-This is Tetris for 1 or 2 players. You can compete with your friend or play so
+# About game
+***
+    Classic Tetris with 2 gamemodes: solo and duo (to compete with your friend)
 
-If you want to play you will need to read this instruction:
-Firstly, you need to install python(obviously), project files and pygame.
-Secondly, you need to open "main_menu.py".
-Good luck have fun.
+## Instruction how to play:
+1. Clone project using git clone or by downloading it [manually](https://github.com/sabonlise/tetris/archive/master.zip) (check [requirements](https://github.com/sabonlise/tetris/blob/master/requirements.txt) file before).
+    git clone https://github.com/sabonlise/tetris.git
+2. Run 'solo.py' or 'duo.py' (no matter what, it'll open main menu in either ways).
+3. Have fun.
+
+## Authors
+1. [faker01](https://github.com/faker01)
+2. [sabonlise](https://github.com/sabonlise)
