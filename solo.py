@@ -2,9 +2,11 @@ import pygame
 import random
 import os
 
-pygame.font.init()
 
+pygame.font.init()
 pygame.init()
+
+# инициализация звука
 
 line_sound = pygame.mixer.Sound('data/line.wav')
 game_over = pygame.mixer.Sound('data/gameover.wav')
@@ -137,7 +139,6 @@ class Piece(object):
         self.y = y
         self.shape = shape
         self.color = shape_colors[shapes.index(shape)]
-        #  self.color = random.choice(shape_colors)
         self.rotation = 0
 
 
@@ -206,7 +207,7 @@ def draw_text_middle(surface, text, size, color):
     font = pygame.font.SysFont("comicsans", size)
     label = font.render(text, 1, color)
 
-    surface.blit(label, (160, 325))
+    surface.blit(label, (160, 300))
 
 
 def draw_grid(surface, grid):
@@ -214,9 +215,13 @@ def draw_grid(surface, grid):
     sy = top_left_y
 
     for i in range(len(grid)):
-        pygame.draw.line(surface, (128, 128, 128), (sx, sy + i * block_size), (sx+play_width, sy + i * block_size))
+        pygame.draw.line(surface, (128, 128, 128),
+                         (sx, sy + i * block_size),
+                         (sx + play_width, sy + i * block_size))
         for j in range(len(grid[i])):
-            pygame.draw.line(surface, (128, 128, 128), (sx + j * block_size, sy), (sx + j*block_size, sy + play_height))
+            pygame.draw.line(surface, (128, 128, 128),
+                             (sx + j * block_size, sy),
+                             (sx + j * block_size, sy + play_height))
 
 
 def clear_rows(grid, locked):
@@ -238,8 +243,8 @@ def clear_rows(grid, locked):
         for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
             x, y = key
             if y < ind:
-                newKey = (x, y + inc)
-                locked[newKey] = locked.pop(key)
+                new_key = (x, y + inc)
+                locked[new_key] = locked.pop(key)
 
     return inc
 
@@ -306,14 +311,13 @@ def draw_window(surface, grid, score=0, last_score=0):
     surface.blit(label, (20, 150))
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            pygame.draw.rect(surface, grid[i][j], (top_left_x + j*block_size,
-                                                   top_left_y + i*block_size,
+            pygame.draw.rect(surface, grid[i][j], (top_left_x + j * block_size,
+                                                   top_left_y + i * block_size,
                                                    block_size, block_size), 0)
 
     pygame.draw.rect(surface, (255, 0, 0), (top_left_x, top_left_y, play_width, play_height), 5)
 
     draw_grid(surface, grid)
-    #  pygame.display.update()
 
 
 def main(window):
@@ -392,11 +396,10 @@ def main(window):
         draw_window(window, grid, score, int(last_score))
         draw_next_shape(next_piece, window)
         pygame.display.update()
-
+        # проверка поражения
         if check_lost(locked_positions):
             gameover = pygame.transform.scale(load_image('game_over.jpg'), (s_width, s_height))
             window.blit(gameover, (0, 0))
-            # draw_text_middle(window, "Вы проиграли!", 80, (255, 255, 255))
             pygame.mixer.Sound.play(game_over)
             pygame.mixer.music.stop()
             pygame.display.update()
