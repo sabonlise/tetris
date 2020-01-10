@@ -1,7 +1,6 @@
 import pygame
 import random
 import os
-import main_menu as mm
 
 pygame.font.init()
 
@@ -412,10 +411,8 @@ def main_menu(window):
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.5)
     fon = pygame.transform.scale(load_image('fon.jpg'), (s_width, s_height))
-    # window.blit(fon, (0, 0))
     while run:
         window.blit(fon, (0, 0))
-       # window.fill((0, 0, 0))
         draw_text_middle(window, 'Нажмите любую кнопку', 60, (255, 255, 255))
         pygame.display.update()
         for event in pygame.event.get():
@@ -430,3 +427,4 @@ def main_menu(window):
 
 window = pygame.display.set_mode((s_width, s_height))
 pygame.display.set_caption('Тетрис')
+main_menu(window)
