@@ -1,7 +1,6 @@
 import pygame
 import os
-import solo
-import duo
+import subprocess
 
 
 class Button:
@@ -47,7 +46,7 @@ def main_menu(window):
     fon = pygame.transform.scale(load_image('fon.jpg'), (s_width, s_height))
     window.blit(fon, (0, 0))
     while run:
-       # window.fill((0, 0, 0))
+
         button_solo.draw(window)
         button_duo.draw(window)
         draw_text_middle(window, 'Выберите режим игры',
@@ -62,11 +61,10 @@ def main_menu(window):
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_solo.is_clicked(pos):
-                    # os.startfile(r'solo.py')
-                    solo.main_menu(solo.window)
+                    subprocess.Popen(['solo.py'], shell=True, creationflags=subprocess.SW_HIDE)
+
                 elif button_duo.is_clicked(pos):
-                    # os.startfile(r'duo.py')
-                    duo.main_menu(duo.window)
+                    subprocess.Popen(['duo.py'], shell=True, creationflags=subprocess.SW_HIDE)
 
             if event.type == pygame.MOUSEMOTION:
                 if button_solo.is_clicked(pos):
