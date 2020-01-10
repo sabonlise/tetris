@@ -1,7 +1,6 @@
 import pygame
 import random
 import os
-import main_menu as mm
 
 
 pygame.font.init()
@@ -505,3 +504,4 @@ def main_menu(window):
 
 window = pygame.display.set_mode((s_width, s_height))
 pygame.display.set_caption('Тетрис')
+main_menu(window)
