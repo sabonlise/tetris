@@ -30,15 +30,25 @@ top_left_y = s_height - play_height                # верхняя левая �
 
 # Формы фигур
 
-S = [['.....',
+T = [['.....',
+      '..0..',
+      '.000.',
       '.....',
-      '..00.',
-      '.00..',
       '.....'],
      ['.....',
       '..0..',
       '..00.',
-      '...0.',
+      '..0..',
+      '.....'],
+     ['.....',
+      '.....',
+      '.000.',
+      '..0..',
+      '.....'],
+     ['.....',
+      '..0..',
+      '.00..',
+      '..0..',
       '.....']]
 
 Z = [['.....',
@@ -63,10 +73,16 @@ I = [['..0..',
       '.....',
       '.....']]
 
-O = [['.....',
+
+S = [['.....',
       '.....',
+      '..00.',
       '.00..',
-      '.00..',
+      '.....'],
+     ['.....',
+      '..0..',
+      '..00.',
+      '...0.',
       '.....']]
 
 J = [['.....',
@@ -90,6 +106,12 @@ J = [['.....',
       '.00..',
       '.....']]
 
+O = [['.....',
+      '.....',
+      '.00..',
+      '.00..',
+      '.....']]
+
 L = [['.....',
       '...0.',
       '.000.',
@@ -108,27 +130,6 @@ L = [['.....',
      ['.....',
       '.00..',
       '..0..',
-      '..0..',
-      '.....']]
-
-T = [['.....',
-      '..0..',
-      '.000.',
-      '.....',
-      '.....'],
-     ['.....',
-      '..0..',
-      '..00.',
-      '..0..',
-      '.....'],
-     ['.....',
-      '.....',
-      '.000.',
-      '..0..',
-      '.....'],
-     ['.....',
-      '..0..',
-      '.00..',
       '..0..',
       '.....']]
 
@@ -164,7 +165,6 @@ def create_grid(locked_pos={}):
 
 def convert_shape_format(shape):
     positions = []
-
     formatted = shape.shape[shape.rotation % len(shape.shape)]
 
     for i, line in enumerate(formatted):
@@ -216,16 +216,20 @@ def draw_text(surface, text, size, color, x, y):
 def draw_grid(surface, grid, num, score):
     pygame.font.init()
     font = pygame.font.SysFont('comicsans', 60)
+
     sx = top_left_x + num * (play_width + 100)
     sy = top_left_y
     dy = play_height
+
     pygame.draw.rect(surface, (255, 0, 0), (sx, top_left_y, play_width, play_height), 5)
     label = font.render('Счёт: ' + str(score), 1, (255, 255, 255))
     surface.blit(label, (sx + 70, 30))
+
     for i in range(len(grid)):
         pygame.draw.line(surface, (128, 128, 128),
                          (sx, sy + i * block_size),
                          (sx + play_width, sy + i * block_size))
+
         for j in range(len(grid[i])):
             pygame.draw.line(surface, (128, 128, 128),
                              (sx + j * block_size, sy),
@@ -235,7 +239,7 @@ def draw_grid(surface, grid, num, score):
 def clear_rows(grid, locked):
 
     inc = 0
-    for i in range(len(grid)-1, -1, -1):
+    for i in range(len(grid) - 1, -1, -1):
         row = grid[i]
         if (0, 0, 0) not in row:
             inc += 1
@@ -257,16 +261,14 @@ def clear_rows(grid, locked):
     return inc
 
 
-def converted_time(seconds):
-    return seconds // 60 % 60, seconds % 60
-
-
 def draw_next_shape(shape, shape2, surface):
     font = pygame.font.SysFont('comicsans', 30)
     # отрисовка следующей фигуры для первого игрока
     label = font.render('Next 1:', 1, (255, 255, 255))
+
     sx = top_left_x + play_width - 23
     sy = top_left_y
+
     formatted = shape.shape[shape.rotation % len(shape.shape)]
     for i, line in enumerate(formatted):
         row = list(line)
@@ -279,8 +281,10 @@ def draw_next_shape(shape, shape2, surface):
     surface.blit(label, (sx + 40, sy + 50))
     # отрисовка следующей фигуры для второго игрока
     label = font.render('Next 2:', 1, (255, 255, 255))
+
     sx = top_left_x + play_width - 23
     sy = top_left_y + play_height // 2 - 100
+
     formatted = shape2.shape[shape.rotation % len(shape2.shape)]
     for i, line in enumerate(formatted):
         row = list(line)
@@ -290,6 +294,7 @@ def draw_next_shape(shape, shape2, surface):
                                  (sx + j * block_size,
                                   sy + 75 + i * block_size,
                                   block_size, block_size), 0)
+
     surface.blit(label, (sx + 40, sy + 50))
 
 
@@ -331,11 +336,6 @@ def main(window):
     next_piece2 = get_shape()
     clock = pygame.time.Clock()
 
-    counter = 60                  # количество секунд в таймере
-    seconds = str(counter).rjust(3)
-    time_expired = False
-    pygame.time.set_timer(pygame.USEREVENT, 1000)
-
     fall_time = 0
     fall_speed = 0.27
     level_time = 0
@@ -365,6 +365,7 @@ def main(window):
             if not (valid_space(current_piece, grid)) and current_piece.y > 0:
                 current_piece.y -= 1
                 change_piece = True
+
         # 2 player checking for fall shape
         if fall_time2 // 1000 > fall_speed2:
             fall_time2 = 0
@@ -382,12 +383,6 @@ def main(window):
             if event.type == pygame.QUIT:
                 run = False
                 pygame.display.quit()
-            elif event.type == pygame.USEREVENT:
-                counter -= 1
-                if counter > -1:
-                    seconds = str(counter).rjust(3)
-                else:
-                    time_expired = True
             else:
                 keys = pygame.key.get_pressed()
                 if current_piece.y > 1 and current_piece2.y > 1:
@@ -456,13 +451,11 @@ def main(window):
             change_piece2 = False
             score2 += clear_rows(grid2, locked_positions2) * 10
         # drawing
+
         draw_window(window, grid, grid2, score, score2)
         draw_next_shape(next_piece, next_piece2, window)
-        font = pygame.font.SysFont('comicsans', 30)
-        window.blit(font.render('Оставшееся время: ' +
-                                strftime('%M мин. %S сек.', gmtime(int(seconds))),
-                                True, (255, 255, 255)), (240, 70))
         pygame.display.update()
+
         # проверка окончания игры
         if check_lost(locked_positions):
             window.fill((0, 0, 0))
@@ -480,29 +473,16 @@ def main(window):
             pygame.display.update()
             pygame.time.delay(1500)
             run = False
-        elif time_expired:
-            if score > score2:
-                window.fill((0, 0, 0))
-                draw_text(window, "Первый игрок выиграл!", 60, (255, 255, 255), 160, 325)
-            elif score2 > score:
-                window.fill((0, 0, 0))
-                draw_text(window, "Второй игрок выиграл!", 60, (255, 255, 255), 160, 325)
-            else:
-                window.fill((0, 0, 0))
-                draw_text(window, "Ничья!", 60, (255, 255, 255), 330, 325)
-            pygame.mixer.Sound.play(draw)
-            pygame.mixer.music.stop()
-            pygame.display.update()
-            pygame.time.delay(1500)
-            run = False
 
 
 def main_menu(window):
     run = True
     fon = pygame.transform.scale(load_image('fon.jpg'), (s_width, s_height))
+
     pygame.mixer.music.load('data/tetris_theme.mp3')
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.5)
+
     while run:
         window.blit(fon, (0, 0))
         draw_text(window, 'Нажмите любую кнопку', 60, (255, 255, 255), 160, 325)
