@@ -7,6 +7,9 @@
 2. Run 'main_menu.py'.
 3. Have fun.
 
+## Showcase:
+Tetris gameplay showcase video: https://youtu.be/_VfrsLJxXh0
+
 ## Authors
 1. [faker01](https://github.com/faker01)
 2. [sabonlise](https://github.com/sabonlise)
